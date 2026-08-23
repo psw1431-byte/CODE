@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3개 국어 융합 타임어택 단어 퀴즈</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .timer-bar {
+            transition: width 50ms linear;
+        }
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgba(239, 68, 68, 0.2); }
+            50% { background-color: rgba(239, 68, 68, 0.5); }
+        }
+        .danger-pulse {
+            animation: pulse-red 0.5s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-4 sm:p-6">
+
+    <!-- Header -->
+    <header class="max-w-3xl w-full mx-auto flex justify-between items-center py-4 border-b border-slate-700/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl font-bold shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-bolt text-yellow-300"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl tracking-tight text-white">타임어택 단어 마스터</h1>
+                <p class="text-xs text-slate-400">영어 · 한자 · 한국어 3중 매칭 퀴즈</p>
+            </div>
+        </div>
+        <button id="btn-open-dict" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-600 transition flex items-center gap-2">
+            <i class="fa-solid fa-book"></i> 단어장 (<span id="dict-count">0</span>)
+        </button>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-3xl w-full mx-auto my-auto py-6">
+
+        <!-- 1. START SCREEN -->
+        <section id="screen-start" class="glass-card rounded-2xl p-6 sm:p-10 text-center shadow-2xl">
+            <div class="w-20 h-20 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl border border-indigo-500/30">
+                <i class="fa-solid fa-stopwatch"></i>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-3">5초 스피드 단어 퀴즈</h2>
+            <p class="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed max-w-lg mx-auto">
+                영어, 한자, 한국어 뜻이 무작위 번갈아가며 출제됩니다.<br>
+                한 문제당 <span class="text-yellow-400 font-bold">5초</span> 안에 정답을 맞혀보세요!
+            </p>
+
+            <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mb-8 text-center text-xs text-slate-400">
+                <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700">
+                    <i class="fa-solid fa-shuffle text-indigo-400 text-base mb-1 block"></i>
+                    무작위 질문 방식
+                </div>
+                <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700">
+                    <i class="fa-solid fa-clock text-amber-400 text-base mb-1 block"></i>
+                    문제당 5초 제한
+                </div>
+                <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700">
+                    <i class="fa-solid fa-bullseye text-emerald-400 text-base mb-1 block"></i>
+                    100점 만점 집계
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btn-start-quiz" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 font-bold text-white shadow-lg shadow-indigo-500/25 transition transform active:scale-95 text-lg">
+                    <i class="fa-solid fa-play mr-2"></i> 퀴즈 시작하기
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. QUIZ SCREEN -->
+        <section id="screen-quiz" class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl hidden">
+            <!-- Top Progress & Score -->
+            <div class="flex justify-between items-center mb-4 text-xs font-semibold text-slate-400">
+                <span id="quiz-progress-text" class="bg-slate-800 px-3 py-1 rounded-full border border-slate-700">문제 1 / 10</span>
+                <span id="quiz-type-badge" class="bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 px-2.5 py-1 rounded-full">영어 ➔ 한자/뜻</span>
+            </div>
+
+            <!-- Timer Gauge -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center text-xs mb-1 font-bold">
+                    <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> 남은 시간</span>
+                    <span id="timer-text" class="text-amber-400 text-sm">5.0초</span>
+                </div>
+                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700/80 p-0.5">
+                    <div id="timer-bar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-red-500 rounded-full timer-bar" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-slate-900/80 rounded-xl p-6 text-center border border-slate-700/80 mb-6 shadow-inner relative overflow-hidden">
+                <div id="question-type-label" class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">다음 제시어의 알맞은 의미를 선택하세요</div>
+                <div id="question-text" class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide py-2">
+                    Revolution
+                </div>
+            </div>
+
+            <!-- 4 Options Grid -->
+            <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <!-- Buttons injected dynamically -->
+            </div>
+        </section>
+
+        <!-- 3. RESULT & WRONG ANSWER NOTE SCREEN -->
+        <section id="screen-result" class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl hidden">
+            <div class="text-center mb-8 border-b border-slate-700/60 pb-6">
+                <div id="result-badge" class="inline-block px-4 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs mb-3 border border-indigo-500/30">
+                    학습 완료
+                </div>
+                <h2 class="text-3xl font-black text-white mb-2">최종 결과 보고서</h2>
+                <div class="flex justify-center items-baseline gap-1 my-4">
+                    <span id="final-score" class="text-5xl sm:text-6xl font-black text-amber-400">0</span>
+                    <span class="text-2xl font-bold text-slate-400">/ 100 점</span>
+                </div>
+                <p id="result-comment" class="text-slate-300 text-sm sm:text-base font-medium">수고하셨습니다! 오답을 복습하여 100점에 도전해보세요.</p>
+            </div>
+
+            <!-- Summary Statistics Cards -->
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <div class="bg-slate-800/80 p-3 sm:p-4 rounded-xl text-center border border-slate-700">
+                    <div class="text-xs text-slate-400 mb-1">총 문제</div>
+                    <div id="stat-total" class="text-xl sm:text-2xl font-extrabold text-white">0</div>
+                </div>
+                <div class="bg-emerald-950/40 p-3 sm:p-4 rounded-xl text-center border border-emerald-800/50">
+                    <div class="text-xs text-emerald-400 mb-1">정답</div>
+                    <div id="stat-correct" class="text-xl sm:text-2xl font-extrabold text-emerald-400">0</div>
+                </div>
+                <div class="bg-rose-950/40 p-3 sm:p-4 rounded-xl text-center border border-rose-800/50">
+                    <div class="text-xs text-rose-400 mb-1">오답/시간초과</div>
+                    <div id="stat-wrong" class="text-xl sm:text-2xl font-extrabold text-rose-400">0</div>
+                </div>
+            </div>
+
+            <!-- WRONG ANSWER NOTE SECTION (오답노트) -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-rose-400"></i> 오답노트
+                    </h3>
+                    <span id="wrong-count-tag" class="text-xs bg-rose-900/60 text-rose-300 border border-rose-700/50 px-2.5 py-0.5 rounded-full font-bold">오답 0개</span>
+                </div>
+
+                <div id="wrong-notes-list" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+                    <!-- Dynamic Wrong Note Cards -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-retry-wrong" class="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white shadow-lg shadow-rose-600/30 transition text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-rotate-right"></i> 오답만 다시 풀기
+                </button>
+                <button id="btn-restart-all" class="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-white shadow-lg shadow-indigo-600/30 transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> 전체 다시 풀기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-500 py-4 border-t border-slate-800">
+        3개 국어 타임어택 학습기 &copy; 2026 | 단어 수정을 통해 자신만의 단어장을 구성할 수 있습니다.
+    </footer>
+
+    <!-- DICTIONARY MODAL -->
+    <div id="modal-dict" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-2xl w-full rounded-2xl p-6 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-700">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-indigo-400"></i> 단어장 관리 및 수정
+                </h3>
+                <button id="btn-close-dict" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-400 mb-3">
+                원하는 단어를 자유롭게 추가/수정하세요. 형식: <code class="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">영어 | 한자 | 한국어뜻</code>
+            </p>
+
+            <textarea id="dict-textarea" class="w-full flex-1 min-h-[220px] bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm font-mono text-slate-200 focus:outline-none focus:border-indigo-500 mb-4 leading-relaxed" spellcheck="false"></textarea>
+
+            <div class="flex justify-between items-center">
+                <button id="btn-reset-default" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-600">
+                    기본 단어장으로 복원
+                </button>
+                <button id="btn-save-dict" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md">
+                    저장 및 반영하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. DEFAULT VOCABULARY DATABASE (High yield Academic / CSAT Vocabulary)
+        const DEFAULT_WORDS = [
+            { english: "Abstract", hanja: "抽象", korean: "추상적 (사물/현상의 공통 속성을 추출함)" },
+            { english: "Paradox", hanja: "逆說", korean: "역설 (겉보기엔 모순되나 진실을 담음)" },
+            { english: "Revolution", hanja: "革命", korean: "혁명 (근본적인 변화나 체제를 뒤엎음)" },
+            { english: "Innovation", hanja: "革新", korean: "혁신 (묵은 관습/조직을 새롭게 바꿈)" },
+            { english: "Synthesis", hanja: "綜合", korean: "종합/통합 (여러 요소를 하나로 합침)" },
+            { english: "Phenomenon", hanja: "現象", korean: "현상 (눈에 보이는 사물의 일이나 상태)" },
+            { english: "Perspective", hanja: "觀點", korean: "관점/시각 (사물을 보는 각도나 위치)" },
+            { english: "Hypothesis", hanja: "假設", korean: "가설 (어떤 현상을 설명하기 위한 임시 전제)" },
+            { english: "Evolution", hanja: "進化", korean: "진화 (점차 발전해 나가는 과정)" },
+            { english: "Ambiguity", hanja: "曖昧", korean: "애매함 (희미하고 분명하지 아니함)" },
+            { english: "Friction", hanja: "摩擦", korean: "마찰 (두 물체의 부딪침 또는 의견 충돌)" },
+            { english: "Harmony", hanja: "調和", korean: "조화 (서로 잘 어울림)" },
+            { english: "Potential", hanja: "潛在", korean: "잠재력 (겉으로 드러나지 않고 숨어 있음)" },
+            { english: "Structure", hanja: "構造", korean: "구조 (부분이 전체를 이루는 짜임새)" },
+            { english: "Subjectivity", hanja: "主觀", korean: "주관 (자기만의 견해나 관점)" },
+            { english: "Objectivity", hanja: "客觀", korean: "객관 (제3자의 중립적 관점)" },
+            { english: "Relativity", hanja: "相對", korean: "상대성 (서로 비교되거나 맞서 있음)" },
+            { english: "Absolute", hanja: "絕對", korean: "절대적 (아무런 조건이나 제약이 없음)" },
+            { english: "Essential", hanja: "本質", korean: "본질적 (사물이나 현상의 근본 성질)" },
+            { english: "Efficiency", hanja: "效率", korean: "효율성 (노력/비용 대비 결과의 비율)" }
+        ];
+
+        // Active State
+        let currentDict = [];
+        let activeQuizList = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let quizHistory = []; // Stores user answers for wrong notes
+        let timerInterval = null;
+        const QUESTION_TIME_LIMIT = 5.0; // Seconds
+        let timeRemaining = QUESTION_TIME_LIMIT;
+
+        // DOM Elements
+        const screenStart = document.getElementById('screen-start');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenResult = document.getElementById('screen-result');
+
+        const btnStartQuiz = document.getElementById('btn-start-quiz');
+        const btnOpenDict = document.getElementById('btn-open-dict');
+        const btnCloseDict = document.getElementById('btn-close-dict');
+        const btnSaveDict = document.getElementById('btn-save-dict');
+        const btnResetDefault = document.getElementById('btn-reset-default');
+        const btnRetryWrong = document.getElementById('btn-retry-wrong');
+        const btnRestartAll = document.getElementById('btn-restart-all');
+
+        const modalDict = document.getElementById('modal-dict');
+        const dictTextarea = document.getElementById('dict-textarea');
+        const dictCountSpan = document.getElementById('dict-count');
+
+        const quizProgressText = document.getElementById('quiz-progress-text');
+        const quizTypeBadge = document.getElementById('quiz-type-badge');
+        const timerText = document.getElementById('timer-text');
+        const timerBar = document.getElementById('timer-bar');
+        const questionTypeLabel = document.getElementById('question-type-label');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+
+        // Audio Effects (Synthesized using Web Audio API to avoid external asset dependency)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq, duration, type = 'sine') {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playCorrectSound() {
+            playBeep(523.25, 0.1); // C5
+            setTimeout(() => playBeep(659.25, 0.15), 80); // E5
+        }
+
+        function playWrongSound() {
+            playBeep(220, 0.2, 'sawtooth'); // A3
+            setTimeout(() => playBeep(180, 0.25, 'sawtooth'), 150);
+        }
+
+        // --- VOCABULARY MANAGEMENT ---
+        function loadDictionary() {
+            const saved = localStorage.getItem('vocab_quiz_dict');
+            if (saved) {
+                try {
+                    currentDict = JSON.parse(saved);
+                } catch(e) {
+                    currentDict = [...DEFAULT_WORDS];
+                }
+            } else {
+                currentDict = [...DEFAULT_WORDS];
+            }
+            dictCountSpan.textContent = currentDict.length;
+        }
+
+        function renderDictToTextarea() {
+            dictTextarea.value = currentDict.map(item => `${item.english} | ${item.hanja} | ${item.korean}`).join('\n');
+        }
+
+        function parseDictFromTextarea() {
+            const lines = dictTextarea.value.split('\n');
+            const newDict = [];
+            lines.forEach(line => {
+                const parts = line.split('|').map(p => p.trim());
+                if (parts.length >= 3 && parts[0] && parts[1] && parts[2]) {
+                    newDict.push({ english: parts[0], hanja: parts[parts.length - 2], korean: parts[parts.length - 1] });
+                }
+            });
+            if (newDict.length < 4) {
+                alert("최소 4개 이상의 단어가 필요합니다!");
+                return false;
+            }
+            currentDict = newDict;
+            localStorage.setItem('vocab_quiz_dict', JSON.stringify(currentDict));
+            dictCountSpan.textContent = currentDict.length;
+            return true;
+        }
+
+        // --- QUIZ GAME ENGINE ---
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startQuiz(wordsList = null) {
+            const sourceList = wordsList && wordsList.length >= 4 ? wordsList : currentDict;
+            if (sourceList.length < 4) {
+                alert("단어가 부족합니다. 최소 4개 이상의 단어가 필요합니다.");
+                return;
+            }
+
+            activeQuizList = shuffleArray(sourceList);
+            currentQuestionIndex = 0;
+            score = 0;
+            quizHistory = [];
+
+            screenStart.classList.add('hidden');
+            screenResult.classList.add('hidden');
+            screenQuiz.classList.remove('hidden');
+
+            showQuestion();
+        }
+
+        function showQuestion() {
+            clearInterval(timerInterval);
+            if (currentQuestionIndex >= activeQuizList.length) {
+                finishQuiz();
+                return;
+            }
+
+            const currentWord = activeQuizList[currentQuestionIndex];
+            
+            // Randomly choose question direction/mode:
+            // Mode 0: Prompt = English -> Options = Korean + Hanja
+            // Mode 1: Prompt = Hanja -> Options = English + Korean
+            // Mode 2: Prompt = Korean -> Options = English + Hanja
+            const quizMode = Math.floor(Math.random() * 3);
+
+            let promptText = "";
+            let promptLabel = "";
+            let badgeText = "";
+            let correctAnswerText = "";
+            let getOptionTextFn = null;
+
+            if (quizMode === 0) {
+                promptText = currentWord.english;
+                promptLabel = "다음 영어 단어에 해당하는 알맞은 한자/뜻을 고르세요";
+                badgeText = "영어 ➔ 한자/뜻";
+                correctAnswerText = `${currentWord.hanja} (${currentWord.korean})`;
+                getOptionTextFn = (item) => `${item.hanja} (${item.korean})`;
+            } else if (quizMode === 1) {
+                promptText = `${currentWord.hanja}`;
+                promptLabel = "다음 한자가 의미하는 단어를 고르세요";
+                badgeText = "한자 ➔ 영어/뜻";
+                correctAnswerText = `${currentWord.english} — ${currentWord.korean}`;
+                getOptionTextFn = (item) => `${item.english} — ${item.korean}`;
+            } else {
+                promptText = currentWord.korean;
+                promptLabel = "다음 설명에 해당하는 단어/한자를 고르세요";
+                badgeText = "한국어 ➔ 영어/한자";
+                correctAnswerText = `${currentWord.english} [${currentWord.hanja}]`;
+                getOptionTextFn = (item) => `${item.english} [${item.hanja}]`;
+            }
+
+            // UI Updates
+            quizProgressText.textContent = `문제 ${currentQuestionIndex + 1} / ${activeQuizList.length}`;
+            quizTypeBadge.textContent = badgeText;
+            questionTypeLabel.textContent = promptLabel;
+            questionText.textContent = promptText;
+
+            // Generate Distractors (Pick 3 wrong choices from currentDict)
+            const distractors = currentDict.filter(w => w.english !== currentWord.english);
+            const shuffledDistractors = shuffleArray(distractors).slice(0, 3);
+            
+            const options = shuffleArray([
+                { item: currentWord, isCorrect: true, text: correctAnswerText },
+                ...shuffledDistractors.map(d => ({ item: d, isCorrect: false, text: getOptionTextFn(d) }))
+            ]);
+
+            optionsContainer.innerHTML = '';
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-left font-medium text-slate-100 transition duration-150 flex items-center justify-between group active:scale-[0.98]";
+                btn.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-lg bg-slate-700 group-hover:bg-indigo-600 text-xs text-slate-300 group-hover:text-white flex items-center justify-center font-bold transition">${idx + 1}</span>
+                        <span class="text-sm sm:text-base">${opt.text}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition"></i>
+                `;
+                btn.onclick = () => handleAnswerSelect(opt, currentWord, promptText, badgeText, options);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Start 5-second Timer
+            startTimer(currentWord, promptText, badgeText, options);
+        }
+
+        function startTimer(currentWord, promptText, badgeText, options) {
+            timeRemaining = QUESTION_TIME_LIMIT;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                timeRemaining -= 0.05;
+                if (timeRemaining <= 0) {
+                    timeRemaining = 0;
+                    updateTimerUI();
+                    clearInterval(timerInterval);
+                    handleTimeout(currentWord, promptText, badgeText, options);
+                } else {
+                    updateTimerUI();
+                }
+            }, 50);
+        }
+
+        function updateTimerUI() {
+            const pct = (timeRemaining / QUESTION_TIME_LIMIT) * 100;
+            timerBar.style.width = `${pct}%`;
+            timerText.textContent = `${timeRemaining.toFixed(1)}초`;
+
+            if (timeRemaining <= 1.5) {
+                timerText.classList.remove('text-amber-400');
+                timerText.classList.add('text-rose-500', 'font-black');
+            } else {
+                timerText.classList.remove('text-rose-500', 'font-black');
+                timerText.classList.add('text-amber-400');
+            }
+        }
+
+        function disableOptionButtons() {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+        }
+
+        function handleAnswerSelect(selectedOpt, wordObj, promptText, badgeText, allOptions) {
+            clearInterval(timerInterval);
+            disableOptionButtons();
+
+            const isCorrect = selectedOpt.isCorrect;
+            const correctOpt = allOptions.find(o => o.isCorrect);
+
+            if (isCorrect) {
+                score++;
+                playCorrectSound();
+            } else {
+                playWrongSound();
+            }
+
+            // Save history
+            quizHistory.push({
+                questionNum: currentQuestionIndex + 1,
+                word: wordObj,
+                prompt: promptText,
+                badge: badgeText,
+                userChoice: selectedOpt.text,
+                correctChoice: correctOpt.text,
+                isCorrect: isCorrect,
+                isTimeout: false
+            });
+
+            // Visual feedback on buttons
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach((btn) => {
+                const text = btn.querySelector('span > span:nth-child(2)').textContent;
+                if (text === correctOpt.text) {
+                    btn.classList.remove('bg-slate-800/80', 'border-slate-700');
+                    btn.classList.add('bg-emerald-600/30', 'border-emerald-500', 'text-emerald-200');
+                } else if (!isCorrect && text === selectedOpt.text) {
+                    btn.classList.remove('bg-slate-800/80', 'border-slate-700');
+                    btn.classList.add('bg-rose-600/30', 'border-rose-500', 'text-rose-200');
+                }
+            });
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 800);
+        }
+
+        function handleTimeout(wordObj, promptText, badgeText, allOptions) {
+            disableOptionButtons();
+            playWrongSound();
+
+            const correctOpt = allOptions.find(o => o.isCorrect);
+
+            quizHistory.push({
+                questionNum: currentQuestionIndex + 1,
+                word: wordObj,
+                prompt: promptText,
+                badge: badgeText,
+                userChoice: "시간 초과 (미응답)",
+                correctChoice: correctOpt.text,
+                isCorrect: false,
+                isTimeout: true
+            });
+
+            // Highlight correct choice
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach((btn) => {
+                const text = btn.querySelector('span > span:nth-child(2)').textContent;
+                if (text === correctOpt.text) {
+                    btn.classList.remove('bg-slate-800/80', 'border-slate-700');
+                    btn.classList.add('bg-emerald-600/30', 'border-emerald-500', 'text-emerald-200');
+                }
+            });
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 1000);
+        }
+
+        // --- RESULTS & WRONG NOTES ---
+        function finishQuiz() {
+            screenQuiz.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+
+            const total = activeQuizList.length;
+            const correctCount = score;
+            const wrongCount = total - correctCount;
+
+            // Score out of 100
+            const finalScore100 = Math.round((correctCount / total) * 100);
+
+            document.getElementById('final-score').textContent = finalScore100;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-correct').textContent = correctCount;
+            document.getElementById('stat-wrong').textContent = wrongCount;
+
+            // Badge & Comment based on score
+            const resultBadge = document.getElementById('result-badge');
+            const resultComment = document.getElementById('result-comment');
+
+            if (finalScore100 === 100) {
+                resultBadge.textContent = "S급 마스터";
+                resultBadge.className = "inline-block px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-xs mb-3";
+                resultComment.textContent = "완벽합니다! 모든 단어를 정확하고 빠르게 암기하셨습니다.";
+            } else if (finalScore100 >= 80) {
+                resultBadge.textContent = "A급 실력자";
+                resultBadge.className = "inline-block px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-xs mb-3";
+                resultComment.textContent = "훌륭합니다! 틀린 몇몇 오답만 복습하면 100점에 도달할 수 있습니다.";
+            } else {
+                resultBadge.textContent = "복습 필요";
+                resultBadge.className = "inline-block px-4 py-1.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-xs mb-3";
+                resultComment.textContent = "타임어택에 적응하며 오답노트를 중심으로 반복 연습해보세요!";
+            }
+
+            // Render Wrong Answer Notes (오답노트)
+            const wrongNotesContainer = document.getElementById('wrong-notes-list');
+            wrongNotesContainer.innerHTML = '';
+
+            const wrongItems = quizHistory.filter(h => !h.isCorrect);
+            document.getElementById('wrong-count-tag').textContent = `오답 ${wrongItems.length}개`;
+            btnRetryWrong.disabled = wrongItems.length === 0;
+
+            if (wrongItems.length === 0) {
+                wrongNotesContainer.innerHTML = `
+                    <div class="p-6 text-center text-slate-400 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                        <i class="fa-solid fa-circle-check text-emerald-400 text-3xl mb-2 block"></i>
+                        틀린 문제가 없습니다! 완벽한 암기 상태입니다.
+                    </div>
+                `;
+            } else {
+                wrongItems.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs sm:text-sm space-y-2";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                            <span class="font-bold text-slate-400">Q${item.questionNum}. 제시어: <span class="text-white font-extrabold text-base ml-1">${item.prompt}</span></span>
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300 text-[11px]">${item.badge}</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                            <div class="text-rose-400">
+                                <i class="fa-solid fa-xmark mr-1"></i> <span class="font-semibold">내가 선택한 답:</span> ${item.userChoice}
+                            </div>
+                            <div class="text-emerald-400">
+                                <i class="fa-solid fa-check mr-1"></i> <span class="font-semibold">정답:</span> ${item.correctChoice}
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-slate-800/60 bg-slate-800/40 p-2 rounded text-slate-300 flex justify-between items-center text-xs">
+                            <span><strong class="text-indigo-300">영어:</strong> ${item.word.english}</span>
+                            <span><strong class="text-indigo-300">한자:</strong> ${item.word.hanja}</span>
+                            <span><strong class="text-indigo-300">뜻:</strong> ${item.word.korean}</span>
+                        </div>
+                    `;
+                    wrongNotesContainer.appendChild(card);
+                });
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        btnStartQuiz.onclick = () => startQuiz();
+
+        btnOpenDict.onclick = () => {
+            renderDictToTextarea();
+            modalDict.classList.remove('hidden');
+        };
+
+        btnCloseDict.onclick = () => {
+            modalDict.classList.add('hidden');
+        };
+
+        btnSaveDict.onclick = () => {
+            if (parseDictFromTextarea()) {
+                modalDict.classList.add('hidden');
+                alert("단어장이 성공적으로 업데이트 되었습니다!");
+            }
+        };
+
+        btnResetDefault.onclick = () => {
+            if (confirm("기본 단어장으로 되돌리시겠습니까?")) {
+                currentDict = [...DEFAULT_WORDS];
+                localStorage.removeItem('vocab_quiz_dict');
+                renderDictToTextarea();
+                dictCountSpan.textContent = currentDict.length;
+            }
+        };
+
+        btnRestartAll.onclick = () => startQuiz();
+
+        btnRetryWrong.onclick = () => {
+            const wrongWords = quizHistory.filter(h => !h.isCorrect).map(h => h.word);
+            if (wrongWords.length > 0) {
+                startQuiz(wrongWords);
+            }
+        };
+
+        // Initialize on load
+        loadDictionary();
+    </script>
+</body>
+</html>
