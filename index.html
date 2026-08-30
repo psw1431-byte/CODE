@@ -25,11 +25,13 @@
     .eyebrow { color:var(--green); display:block; margin-bottom:22px; }
     h1 { font-size:clamp(44px,7vw,86px); letter-spacing:-.065em; line-height:.97; margin:0 0 28px; font-weight:800; }
     .accent { color:var(--blue); }
-    .typed { color:var(--green); font-family:"DM Mono", monospace; font-size:clamp(15px,2vw,19px); min-height:1.7em; }
+    .typed { display:flex; align-items:flex-start; gap:10px; max-width:620px; min-height:3.4em; padding:13px 15px; border-left:2px solid var(--green); background:rgba(156,242,198,.055); color:var(--green); font-family:"DM Mono", monospace; font-size:clamp(16px,2.2vw,22px); line-height:1.55; }
+    .typing-prefix { color:var(--blue); flex:none; font-size:.7em; padding-top:.26em; }
     .cursor { display:inline-block; width:9px; height:1.05em; background:var(--green); vertical-align:-.18em; margin-left:4px; animation:blink .8s steps(1) infinite; }
     @keyframes blink { 50%{opacity:0} }
     .intro { max-width:600px; color:var(--muted); font-size:16px; line-height:1.8; margin:28px 0; }
-    .cta { display:inline-flex; color:var(--bg); background:var(--blue); padding:13px 19px; font-weight:700; font-size:14px; text-decoration:none; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; }
+    .cta, .chat-launch { display:inline-flex; align-items:center; justify-content:center; color:var(--bg); background:var(--blue); padding:13px 19px; font-weight:700; font-size:14px; text-decoration:none; }
     .orbital { width:min(320px,70vw); aspect-ratio:1; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; margin:auto; position:relative; }
     .orbital::before, .orbital::after { content:""; position:absolute; border:1px solid rgba(156,242,198,.3); border-radius:50%; }
     .orbital::before { width:68%; height:68%; } .orbital::after { width:36%; height:36%; }
@@ -61,8 +63,24 @@
     .detail strong { color:var(--text); font-weight:600; }
     .checklist { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
     .checklist span { border:1px solid var(--line); color:#b8c7d8; font:11px "DM Mono", monospace; padding:7px 9px; }
+    .chat-launch { border:0; cursor:pointer; box-shadow:0 5px 18px rgba(125,211,252,.18); white-space:nowrap; font-family:Pretendard,Arial,sans-serif; }
+    .chat-launch:hover { background:var(--green); }
+    .chat-modal { position:fixed; z-index:11; right:26px; bottom:80px; width:min(450px,calc(100vw - 32px)); height:min(660px,calc(100vh - 120px)); display:none; flex-direction:column; background:#111a28; border:2px solid var(--blue); box-shadow:0 22px 70px rgba(0,0,0,.7),0 0 30px rgba(125,211,252,.18); }
+    .chat-modal.is-open { display:flex; }
+    .chat-top { display:flex; align-items:center; gap:9px; padding:17px 18px; background:var(--blue); color:#071019; font-weight:800; font-size:16px; }
+    .chat-status { width:9px; height:9px; background:var(--green); border-radius:50%; box-shadow:0 0 10px var(--green); }
+    .chat-close { margin-left:auto; border:0; color:#071019; background:transparent; font-size:27px; cursor:pointer; font-weight:400; }
+    .chat-log { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px; background:#0a101a; }
+    .chat-message { max-width:90%; padding:12px 14px; font-size:14px; line-height:1.7; }
+    .chat-message.bot { align-self:flex-start; background:#172437; border:1px solid rgba(125,211,252,.32); color:#f1f6ff; }
+    .chat-message.user { align-self:flex-end; background:var(--blue); color:#071019; font-weight:600; }
+    .chat-questions { padding:16px; border-top:1px solid rgba(125,211,252,.4); background:#111a28; }
+    .chat-question-head { display:flex; justify-content:space-between; color:#bdcce0; font-size:12px; margin-bottom:10px; }
+    .chat-question-list { display:flex; flex-direction:column; gap:7px; }
+    .chat-question { appearance:none; border:1px solid rgba(125,211,252,.32); background:#172437; color:#e6effa; padding:10px 11px; text-align:left; cursor:pointer; font:13px/1.4 Pretendard,Arial,sans-serif; }
+    .chat-question:hover { border-color:var(--green); background:rgba(156,242,198,.11); color:var(--green); }
     footer { border-top:1px solid var(--line); padding:40px 0 55px; color:var(--muted); font:12px "DM Mono", monospace; display:flex; justify-content:space-between; }
-    @media(max-width:700px) { nav ul{display:none}.hero{grid-template-columns:1fr; padding:78px 0 60px; min-height:auto}.orbital{order:-1;width:190px}.grid{grid-template-columns:1fr}.section-title{display:block}.project-list{grid-template-columns:1fr}section{padding:70px 0}footer{gap:15px;flex-direction:column} }
+    @media(max-width:700px) { nav ul{display:none}.hero{grid-template-columns:1fr; padding:78px 0 60px; min-height:auto}.orbital{order:-1;width:190px}.grid{grid-template-columns:1fr}.section-title{display:block}.project-list{grid-template-columns:1fr}section{padding:70px 0}footer{gap:15px;flex-direction:column}.chat-modal{right:16px;bottom:16px;height:min(640px,calc(100vh - 32px))} }
   </style>
 </head>
 <body>
@@ -73,9 +91,9 @@
         <div>
           <span class="eyebrow">2026 SCIENCE HIGH SCHOOL ADMISSION</span>
           <h1>질문하는<br><span class="accent">과학자</span>가<br>되는 여정.</h1>
-          <div class="typed"><span id="typing"></span><span class="cursor"></span></div>
+          <div class="typed"><span class="typing-prefix">MISSION&gt;</span><span id="typing"></span><span class="cursor"></span></div>
           <p class="intro">과학고 입시는 성적표만으로 완성되지 않습니다. 탐구의 깊이, 스스로 설계한 경험, 그리고 그 과정을 설명하는 힘을 차근차근 쌓아갑니다.</p>
-          <a class="cta" href="#roadmap">준비 로드맵 보기 ↓</a>
+          <div class="hero-actions"><a class="cta" href="#roadmap">준비 로드맵 보기 ↓</a><button class="chat-launch" id="chatLaunch" type="button" aria-expanded="false" aria-controls="admissionChat">입학 Q&A 챗봇</button></div>
         </div>
         <div class="orbital" aria-hidden="true"><span class="dot"></span><span class="core"></span></div>
       </section>
@@ -116,10 +134,45 @@
     </main>
     <footer><span>MAKE YOUR QUESTION VISIBLE.</span><span>SCIENCE PATH © 2026</span></footer>
   </div>
+  <aside class="chat-modal" id="admissionChat" aria-label="창원과학고 입학 Q&A 챗봇" aria-hidden="true">
+    <div class="chat-top"><span class="chat-status"></span>창원과고 입학 Q&A <button class="chat-close" id="chatClose" type="button" aria-label="챗봇 닫기">×</button></div>
+    <div class="chat-log" id="chatLog"><div class="chat-message bot">안녕하세요! 창원과학고 입학전형에서 자주 묻는 질문을 선택해 주세요.<br><br><small>안내: 아래 내용은 제공해 주신 2025학년도 자료를 바탕으로 합니다. 최신 일정과 요강은 학교 공식 안내를 확인하세요.</small></div></div>
+    <div class="chat-questions"><div class="chat-question-head"><span>추천 질문을 선택하세요</span><span id="chatTimer">10초 후 변경</span></div><div class="chat-question-list" id="chatQuestionList"></div></div>
+  </aside>
   <script>
-    const phrases = ['관찰하고, 질문하고, 증명하세요.', '매일의 기록이 탐구력이 됩니다.', '당신의 호기심을 포트폴리오로.'];
+    const phrases = [
+      '관찰하고, 질문하고, 증명하세요.',
+      '작은 호기심을 탐구 주제로 바꿔보세요.',
+      '매일의 기록이 탐구력이 됩니다.',
+      '정답보다 나만의 질문을 먼저 찾으세요.',
+      '실패한 실험도 다음 발견의 단서입니다.',
+      '당신의 호기심을 포트폴리오로 완성하세요.'
+    ];
     let p=0, i=0, removing=false; const target=document.getElementById('typing');
-    function type(){ const word=phrases[p]; target.textContent=word.slice(0, i); if(!removing && i<word.length){i++;setTimeout(type,75)}else if(removing && i>0){i--;setTimeout(type,35)}else{if(!removing){removing=true;setTimeout(type,1500)}else{removing=false;p=(p+1)%phrases.length;setTimeout(type,300)}} } type();
+    function type(){ const word=phrases[p]; target.textContent=word.slice(0, i); if(!removing && i<word.length){i++;setTimeout(type,58)}else if(removing && i>0){i--;setTimeout(type,28)}else{if(!removing){removing=true;setTimeout(type,2100)}else{removing=false;p=(p+1)%phrases.length;setTimeout(type,420)}} } type();
+
+    const admissionQAs = [
+      ['모집 인원은 총 몇 명인가요?','정원 내 80명(일반전형 64명, 사회통합전형 16명)과 정원 외 4명 이내를 선발합니다.'],
+      ['지원 가능한 최소 교과 성적 조건이 있나요?','성적 평가 대상 학기의 수학 및 과학 학업성취도가 모두 C 이상인 학생이 지원할 수 있습니다.'],
+      ['교과 성적은 어떤 과목과 학기가 반영되나요?','수학과 과학 2개 과목이 반영됩니다. 1단계는 2학년 1·2학기와 3학년 1학기, 3단계는 3학년 2학기 성적을 추가 반영합니다.'],
+      ['1~3단계 전형 반영 비율은 어떻게 되나요?','제공 자료 기준으로 1단계 서류평가 30%, 2단계 면담평가 30%, 3단계 면접 및 총체적평가 40%입니다.'],
+      ['자기소개서에 교외 대회 수상 실적을 적어도 되나요?','아니요. 올림피아드나 교내·외 대회 입상 실적 등 배제 항목을 기재하면 해당 단계 평가에서 불이익을 받을 수 있습니다.'],
+      ['1단계 서류평가에서는 몇 배수를 선발하나요?','자기소개서·추천서·학생부 II를 바탕으로 모집정원의 3배수 내외를 소집면담 대상으로 선발합니다.'],
+      ['창의·인성 면접에서는 무엇을 평가하나요?','핵심 인성 요소와 수학·과학 분야의 융합적·창의적 사고력을 종합적으로 평가합니다.'],
+      ['3학년 2학기 성적은 언제 제출하나요?','3단계 면접평가 대상자로 선정된 학생이 면접 당일 직접 제출합니다.'],
+      ['타 시·도 중학교 재학생도 지원할 수 있나요?','원칙적으로 경남 소재 중학교 대상이지만, 제공 자료에 적힌 거주 요건을 충족하는 경우 타 시·도 학생도 지원할 수 있습니다.'],
+      ['검정고시 합격자도 지원할 수 있나요?','지원할 수 있습니다. 검정고시 성적증명서를 제출하면 전형위원회 심의를 거쳐 성적이 산정·반영됩니다.'],
+      ['전기 고등학교 중복 지원이 가능한가요?','불가능합니다. 전기모집 고등학교는 1개교만 지원할 수 있습니다.'],
+      ['서류 내용이 사실과 다르면 어떻게 되나요?','위조·허위 기재·대리 작성 등 부정한 방법이 확인되면 입학 허가가 취소될 수 있습니다.']
+    ];
+    const chatPanel=document.getElementById('admissionChat'), chatLaunch=document.getElementById('chatLaunch'), chatClose=document.getElementById('chatClose'), chatLog=document.getElementById('chatLog'), chatQuestionList=document.getElementById('chatQuestionList'), chatTimer=document.getElementById('chatTimer');
+    let chatSeconds=10;
+    function shuffleQuestions(){ const picks=[...admissionQAs].sort(()=>Math.random()-.5).slice(0,4); chatQuestionList.innerHTML=''; picks.forEach(([question,answer])=>{const button=document.createElement('button');button.className='chat-question';button.type='button';button.textContent='❓ '+question;button.addEventListener('click',()=>answerQuestion(question,answer));chatQuestionList.appendChild(button)}); }
+    function addChatMessage(text,kind){const message=document.createElement('div');message.className='chat-message '+kind;message.textContent=text;chatLog.appendChild(message);chatLog.scrollTop=chatLog.scrollHeight;}
+    function answerQuestion(question,answer){addChatMessage(question,'user');window.setTimeout(()=>addChatMessage(answer,'bot'),200);shuffleQuestions();chatSeconds=10;}
+    function toggleChat(open){chatPanel.classList.toggle('is-open',open);chatPanel.setAttribute('aria-hidden',String(!open));chatLaunch.setAttribute('aria-expanded',String(open));if(open)chatClose.focus();}
+    chatLaunch.addEventListener('click',()=>toggleChat(true));chatClose.addEventListener('click',()=>toggleChat(false));
+    shuffleQuestions();window.setInterval(()=>{chatSeconds=chatSeconds===1?10:chatSeconds-1;if(chatSeconds===10)shuffleQuestions();chatTimer.textContent=chatSeconds+'초 후 변경';},1000);
   </script>
 </body>
 </html>
